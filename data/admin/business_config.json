@@ -1,0 +1,77 @@
+{
+  "factory_coordinates": {
+    "Lot's O' Nuts": [
+      32.881893,
+      -111.768036
+    ],
+    "Wicked Choccy's": [
+      32.076176,
+      -81.088371
+    ],
+    "Sugar Shack": [
+      48.11914,
+      -96.18115
+    ],
+    "Secret Factory": [
+      41.446333,
+      -90.565487
+    ],
+    "The Other Factory": [
+      35.1175,
+      -89.971107
+    ]
+  },
+  "product_factory_map": {
+    "Wonka Bar - Nutty Crunch Surprise": "Lot's O' Nuts",
+    "Wonka Bar - Fudge Mallows": "Lot's O' Nuts",
+    "Wonka Bar - Scrumdiddlyumptious": "Lot's O' Nuts",
+    "Wonka Bar - Milk Chocolate": "Wicked Choccy's",
+    "Wonka Bar - Triple Dazzle Caramel": "Wicked Choccy's",
+    "Laffy Taffy": "Sugar Shack",
+    "SweeTARTS": "Sugar Shack",
+    "Nerds": "Sugar Shack",
+    "Fun Dip": "Sugar Shack",
+    "Fizzy Lifting Drinks": "Sugar Shack",
+    "Everlasting Gobstopper": "Secret Factory",
+    "Lickable Wallpaper": "Secret Factory",
+    "Wonka Gum": "Secret Factory",
+    "Hair Toffee": "The Other Factory",
+    "Kazookles": "The Other Factory"
+  },
+  "sla_thresholds_days": {
+    "Standard Class": 5.0,
+    "Second Class": 3.0,
+    "First Class": 2.0,
+    "Same Day": 1.0
+  },
+  "efficiency_weights": {
+    "delay_weight": 0.6,
+    "lead_time_weight": 0.4
+  },
+  "alert_thresholds": {
+    "bottleneck_delay_rate_pct": 50.0,
+    "min_shipments_for_evaluation": 5,
+    "lead_time_outlier_days": 10.0
+  },
+  "kpi_targets": {
+    "target_delay_rate_pct": 25.0,
+    "target_avg_lead_time_days": 3.5,
+    "target_efficiency_score": 0.75
+  },
+  "ml_settings": {
+    "random_forest_estimators": 100,
+    "test_size": 0.2,
+    "random_state": 42,
+    "forecast_horizon_months": 6,
+    "confidence_level": 0.95
+  },
+  "forecast_settings": {
+    "default_horizon_months": 6,
+    "confidence_level": 0.95
+  },
+  "visualization_settings": {
+    "default_chart_theme": "dark",
+    "enable_sankey": true,
+    "enable_animations": true
+  }
+}

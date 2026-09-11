@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  nassau-logistics-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nassau_candy_logistics_app
+    restart: unless-stopped
+    ports:
+      - "8501:8501"   # Logistics Analytics Platform
+      - "8600:8600"   # Developer IAM & Control Portal
+    volumes:
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

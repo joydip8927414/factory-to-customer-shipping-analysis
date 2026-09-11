@@ -1,0 +1,9 @@
+{
+  "username": "admin",
+  "full_name": "Nassau Logistics Administrator",
+  "salt": "8c35175fb36939ec1a19383e47b36461",
+  "hash": "b39cdcb5de011ce32f61954334072f17f3b2fc2cd9dbacadb43b3aede78dd613",
+  "updated_at": "2026-09-09T11:24:38.235421",
+  "session_timeout_seconds": 900,
+  "role": "Administrator"
+}

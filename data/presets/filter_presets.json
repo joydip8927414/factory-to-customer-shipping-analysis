@@ -1,0 +1,22 @@
+{
+  "Default (All Data)": {},
+  "Delayed Orders Only": {
+    "delay_only": true
+  },
+  "Year 2024 Scope": {
+    "years": [
+      2024
+    ]
+  },
+  "Express Modes (Air/Fast)": {
+    "ship_modes": [
+      "First Class",
+      "Same Day"
+    ]
+  },
+  "Lot's O' Nuts Factory": {
+    "factories": [
+      "Lot's O' Nuts"
+    ]
+  }
+}
