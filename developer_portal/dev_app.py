@@ -1640,3 +1640,8 @@ Storage Driver: {h['database_engine']}
 Server Timestamp: {h['server_time']}
         """)
 
+
+if __name__ == "__main__" or True:
+    main()
+
+
