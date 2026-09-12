@@ -47,7 +47,7 @@ from src.developer.dev_security import (
     ensure_root_owner_and_system_security,
     hash_dev_password,
 )
-from src.utils import get_logger
+from src.utils import get_logger, get_secret
 
 logger = get_logger("ProductionSeeder")
 
@@ -124,7 +124,7 @@ def seed_production(clean_tests: bool = True) -> None:
         admin_user = session.execute(select(User).where(User.username == "admin")).scalar_one_or_none()
         if not admin_user:
             salt = bcrypt.gensalt(rounds=12)
-            default_pwd = b"ChangeMeAdmin2026!"
+            default_pwd = get_secret("ADMIN_PASSWORD", "ChangeMeAdmin2026!").encode("utf-8")
             hashed = bcrypt.hashpw(default_pwd, salt).decode("utf-8")
             admin_user = User(
                 username="admin",

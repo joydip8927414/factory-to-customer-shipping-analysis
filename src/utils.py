@@ -38,6 +38,21 @@ OUTPUTS_MODELS_DIR: Path = PROJECT_ROOT / "outputs" / "models"
 REPORTS_DIR: Path = PROJECT_ROOT / "reports"
 NOTEBOOKS_DIR: Path = PROJECT_ROOT / "notebooks"
 
+
+def get_secret(key: str, default: str = "") -> str:
+    """
+    Retrieve secret securely from Streamlit secrets (cloud) or environment variables (local/docker).
+    Falls back to default if neither is set.
+    """
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and key in st.secrets:
+            return str(st.secrets[key])
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
+
 RAW_DATA_FILE: Path = DATA_RAW_DIR / "Nassau Candy Distributor.csv"
 CLEANED_DATA_FILE: Path = DATA_PROCESSED_DIR / "cleaned_data.csv"
 FEATURED_DATA_FILE: Path = DATA_PROCESSED_DIR / "featured_data.csv"

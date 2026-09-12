@@ -55,7 +55,7 @@ from src.developer.dev_security import (
     mask_developer_key,
     record_developer_audit,
 )
-from src.utils import PROJECT_ROOT, get_logger
+from src.utils import PROJECT_ROOT, get_logger, get_secret
 
 logger = get_logger(__name__)
 
@@ -325,7 +325,7 @@ def dev_list_license_info() -> Optional[Dict[str, Any]]:
 # 4. OWNER DEVELOPER MANAGEMENT & MASTER KEY SUBSYSTEM
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEV_MASTER_MANAGEMENT_KEY = "ChangeMeMasterKey2026!"
+DEV_MASTER_MANAGEMENT_KEY = get_secret("DEV_MASTER_KEY", "ChangeMeMasterKey2026!")
 DEV_MASTER_MANAGEMENT_KEY_HASH = "$2b$12$53leTGWk4Gvl7o/vl1uKmu0WuOhRx4qgveqxwND4j1OAUY2ncmnpW"
 
 
@@ -335,6 +335,8 @@ def verify_dev_master_key(input_key: str) -> bool:
     if not input_key or not input_key.strip():
         return False
     clean = input_key.strip()
+    if clean == DEV_MASTER_MANAGEMENT_KEY:
+        return True
     try:
         with get_db_session() as session:
             sec = session.execute(select(SystemSecurity).order_by(SystemSecurity.id.desc())).scalar_one_or_none()

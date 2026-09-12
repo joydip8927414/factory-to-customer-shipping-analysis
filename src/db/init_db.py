@@ -39,7 +39,7 @@ from src.db.models import (
     User,
 )
 from src.db.session import Base, engine, get_db_session
-from src.utils import FACTORY_COORDINATES, PRODUCT_FACTORY_MAP, get_logger
+from src.utils import FACTORY_COORDINATES, PRODUCT_FACTORY_MAP, get_logger, get_secret
 
 logger = get_logger(__name__)
 
@@ -73,7 +73,7 @@ def init_database() -> None:
         admin_user = session.execute(select(User).where(User.username == "admin")).scalar_one_or_none()
         if not admin_user:
             salt = bcrypt.gensalt(rounds=12)
-            default_pwd = b"ChangeMeAdmin2026!"
+            default_pwd = get_secret("ADMIN_PASSWORD", "ChangeMeAdmin2026!").encode("utf-8")
             hashed = bcrypt.hashpw(default_pwd, salt).decode("utf-8")
 
             admin_user = User(
@@ -182,7 +182,8 @@ def init_database() -> None:
         dev_count = session.query(Developer).count()
         if dev_count == 0:
             dev_salt = bcrypt.gensalt(rounds=12)
-            dev_pwd_hashed = bcrypt.hashpw(b"ChangeMeDev2026!", dev_salt).decode("utf-8")
+            dev_pwd_raw = get_secret("DEV_USER_PASSWORD", "ChangeMeDev2026!")
+            dev_pwd_hashed = bcrypt.hashpw(dev_pwd_raw.encode("utf-8"), dev_salt).decode("utf-8")
             dev_user = Developer(
                 username="developer",
                 email="dev@nassaucandy.com",
