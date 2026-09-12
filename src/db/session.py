@@ -49,9 +49,40 @@ class Base(DeclarativeBase):
     pass
 
 
+_DB_BOOTSTRAPPED = False
+_DB_BOOTSTRAPPING = False
+
+
+def ensure_db_ready() -> None:
+    """
+    Ensure database schema tables and core metadata seed records exist.
+    Called automatically on first database access or dashboard startup to support
+    zero-config cloud hosting (Streamlit Community Cloud, Render, Docker, etc.).
+    """
+    global _DB_BOOTSTRAPPED, _DB_BOOTSTRAPPING
+    if _DB_BOOTSTRAPPED or _DB_BOOTSTRAPPING:
+        return
+
+    _DB_BOOTSTRAPPING = True
+    try:
+        from src.db.init_db import init_database
+        from src.developer.dev_security import ensure_root_owner_and_system_security
+
+        init_database()
+        ensure_root_owner_and_system_security()
+        _DB_BOOTSTRAPPED = True
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Automatic database bootstrap check: %s", e)
+    finally:
+        _DB_BOOTSTRAPPING = False
+
+
 @contextmanager
 def get_db_session() -> Generator[Session, None, None]:
     """Provide a transactional scope around a series of operations."""
+    if not _DB_BOOTSTRAPPED and not _DB_BOOTSTRAPPING:
+        ensure_db_ready()
     session = ScopedSession()
     try:
         yield session
@@ -61,3 +92,4 @@ def get_db_session() -> Generator[Session, None, None]:
         raise
     finally:
         session.close()
+

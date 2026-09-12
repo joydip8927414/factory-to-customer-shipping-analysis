@@ -21,6 +21,7 @@ ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 LOGO_FILE = ASSETS_DIR / "logo.png"
 sys.path.insert(0, str(ROOT))
 
+from src.db.session import ensure_db_ready
 from src.utils import (
     FACTORY_COLOURS,
     FEATURED_DATA_FILE,
@@ -508,6 +509,7 @@ def render_left_sidebar_controls() -> None:
 
 # ── Main Enterprise Navigation Registration ────────────────────────────────────
 def main() -> None:
+    ensure_db_ready()
     df_full = load_data()
     render_left_sidebar_controls()
 

@@ -37,6 +37,9 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from src.db.session import ensure_db_ready
+ensure_db_ready()
+
 from src.developer.dev_security import (
     DEV_SESSION_TIMEOUT,
     authenticate_developer,
@@ -1637,6 +1640,3 @@ Storage Driver: {h['database_engine']}
 Server Timestamp: {h['server_time']}
         """)
 
-
-if __name__ == "__main__":
-    main()
