@@ -73,6 +73,14 @@ logs/
 *.tmp
 *.bak
 
-# LaTeX Internship Project Reports
+# LaTeX Internship Project Reports & Files
 reports/
+*.tex
+*.bib
+*.aux
+*.bbl
+*.blg
+*.toc
+*.out
+
 
