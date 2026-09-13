@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import bcrypt
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
@@ -355,7 +355,24 @@ def ensure_root_owner_and_system_security() -> None:
 
             # Maintain joydip257 as an authorized Owner account
             jd_acct = session.execute(select(Developer).where(Developer.username == "joydip257")).scalar_one_or_none()
-            if jd_acct:
+            if not jd_acct:
+                jd_acct = Developer(
+                    username="joydip257",
+                    email="joydip257@nassaucandy.com",
+                    full_name="Joydip Das",
+                    password_hash=hash_dev_password(DEFAULT_OWNER_PASSWORD),
+                    role="Owner",
+                    is_owner=True,
+                    role_id=r_owner.id if r_owner else None,
+                    is_active=True,
+                    status="ACTIVE",
+                    must_change_password=False,
+                    created_at=now,
+                    updated_at=now,
+                )
+                session.add(jd_acct)
+                session.flush()
+            else:
                 jd_acct.role = "Owner"
                 jd_acct.is_owner = True
                 jd_acct.status = "ACTIVE"
@@ -430,7 +447,12 @@ def authenticate_developer(
 
     with get_db_session() as session:
         dev = session.execute(
-            select(Developer).where(or_(Developer.username == ident, Developer.email == ident))
+            select(Developer).where(
+                or_(
+                    func.lower(Developer.username) == ident.lower(),
+                    func.lower(Developer.email) == ident.lower(),
+                )
+            )
         ).scalar_one_or_none()
 
         if not dev:
@@ -466,8 +488,9 @@ def authenticate_developer(
             dev.locked_until = None
             dev.failed_logins = 0
 
-        # Verify password hash
-        if not verify_dev_password(password, dev.password_hash):
+        # Verify password hash (with whitespace resilience)
+        dev_pw_ok = verify_dev_password(password, dev.password_hash) or verify_dev_password(password.strip(), dev.password_hash)
+        if not dev_pw_ok:
             dev.failed_logins = (dev.failed_logins or 0) + 1
             remaining = max(0, MAX_DEV_FAILED_ATTEMPTS - dev.failed_logins)
 
@@ -625,33 +648,33 @@ def validate_developer_access_key(
                 break
 
         if not matched_key:
-            # Master key override verification
+            # Master key override verification (restricted to Owner accounts)
             from src.developer.dev_service import verify_dev_master_key
             if verify_dev_master_key(key_clean):
-                if not dev_is_owner and dev_role != "Owner":
+                if not dev_is_owner:
                     record_developer_audit(
                         developer=dev_user,
                         performed_by=dev_user,
                         action="Master Key Rejected",
                         module="Authentication",
                         status="Failure",
-                        details="Non-owner account attempted to authenticate using Master Management Key.",
+                        details="Attempted Master Key login with standard developer account (restricted to Owner).",
                         ip_address=ip_address,
                         device=device_name,
                     )
-                    return False, "Master Developer Management Key override is restricted to Owner accounts."
-                else:
-                    record_developer_audit(
-                        developer=dev_user,
-                        performed_by=dev_user,
-                        action="Master Key Override",
-                        module="Authentication",
-                        status="Success",
-                        details="Owner authenticated via Master Management Key override.",
-                        ip_address=ip_address,
-                        device=device_name,
-                    )
-                    return True, "Authenticated via Master Developer Management Key override."
+                    return False, "Master Management Key is restricted to Owner accounts. Standard developers must use their assigned access key."
+
+                record_developer_audit(
+                    developer=dev_user,
+                    performed_by=dev_user,
+                    action="Master Key Override",
+                    module="Authentication",
+                    status="Success",
+                    details="Authenticated Layer 2 via Master Developer Management Key override.",
+                    ip_address=ip_address,
+                    device=device_name,
+                )
+                return True, "Authenticated via Master Developer Management Key override."
 
             record_developer_audit(
                 developer=dev_user,
@@ -772,7 +795,7 @@ def check_trusted_device(
         ).scalar_one_or_none()
 
         if not dev_rec:
-            return False, "Unrecognized device. This workstation has not been authorized.", None
+            return False, "Unrecognized device. Authorization required.", None
 
         dev_dict = {
             "id": dev_rec.id,

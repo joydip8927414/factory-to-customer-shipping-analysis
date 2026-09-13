@@ -92,6 +92,34 @@ def init_database() -> None:
             admin_user.failed_logins = 0
             admin_user.locked_until = None
 
+        # Ensure all users are active and unlocked
+        for u in session.query(User).all():
+            u.failed_logins = 0
+            u.locked_until = None
+            u.is_active = True
+
+        # Seed Joydip administrator accounts
+        for jd_u, jd_email, jd_name in [
+            ("joydip257", "joydip257@nassaucandy.com", "Joydip Das"),
+            ("joydip_icy", "joydip_icy@nassaucandy.com", "Joydip Das"),
+        ]:
+            existing_jd = session.execute(select(User).where(User.username == jd_u)).scalar_one_or_none()
+            if not existing_jd:
+                salt_jd = bcrypt.gensalt(rounds=12)
+                jd_pwd = get_secret("DEV_OWNER_PASSWORD", "ChangeMeOnFirstLogin2026!").encode("utf-8")
+                session.add(User(
+                    username=jd_u,
+                    email=jd_email,
+                    full_name=jd_name,
+                    password_hash=bcrypt.hashpw(jd_pwd, salt_jd).decode("utf-8"),
+                    role_id=role_map["Administrator"].id,
+                    is_active=True,
+                ))
+            else:
+                existing_jd.is_active = True
+                existing_jd.failed_logins = 0
+                existing_jd.locked_until = None
+
         # 3. Seed Initial Company Registration IDs for registration workflow
         active_reg_count = session.query(RegistrationId).filter_by(status="ACTIVE").count()
         if active_reg_count < 2:

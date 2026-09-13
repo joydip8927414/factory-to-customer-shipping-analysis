@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import bcrypt
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -86,7 +86,12 @@ def authenticate_user_db(
 
     with get_db_session() as session:
         user = session.execute(
-            select(User).where(or_(User.username == ident, User.email == ident))
+            select(User).where(
+                or_(
+                    func.lower(User.username) == ident.lower(),
+                    func.lower(User.email) == ident.lower(),
+                )
+            )
         ).scalar_one_or_none()
 
         if not user:
@@ -116,8 +121,9 @@ def authenticate_user_db(
             user.locked_until = None
             user.failed_logins = 0
 
-        # Verify password
-        if not verify_password_bcrypt(password, user.password_hash):
+        # Verify password (with whitespace resilience)
+        pw_ok = verify_password_bcrypt(password, user.password_hash) or verify_password_bcrypt(password.strip(), user.password_hash)
+        if not pw_ok:
             user.failed_logins = (user.failed_logins or 0) + 1
             attempts_remaining = max(0, MAX_FAILED_ATTEMPTS - user.failed_logins)
 

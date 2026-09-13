@@ -229,10 +229,10 @@ def render_bootstrap_initial_setup():
                 <span style="font-weight:700;color:#F8FAFC;font-size:1.05rem;">Root System Owner Credentials</span>
             </div>
             """, unsafe_allow_html=True)
-            b_fullname = st.text_input("Full Name", placeholder="e.g. Chief Technology Officer")
-            b_username = st.text_input("Owner Username", placeholder="e.g. lead_architect")
-            b_email = st.text_input("Corporate Email", placeholder="e.g. lead@nassaucandy.com")
-            b_password = st.text_input("Passphrase (min 8 chars)", type="password", placeholder="Enter strong passphrase")
+            b_fullname = st.text_input("Full Name", placeholder="")
+            b_username = st.text_input("Owner Username", placeholder="")
+            b_email = st.text_input("Corporate Email", placeholder="")
+            b_password = st.text_input("Passphrase (min 8 chars)", type="password", placeholder="")
 
             boot_sub = st.form_submit_button("Initialize Enterprise IAM System", use_container_width=True, type="primary")
 
@@ -294,23 +294,30 @@ def render_developer_login():
             dev_tab_login, dev_tab_register = st.tabs([":material/key: Developer Sign In", ":material/person_add: Developer Registration"])
             with dev_tab_login:
                 st.markdown("""
+                <style>
+                input::-webkit-contacts-auto-fill-button,
+                input::-webkit-credentials-auto-fill-button {
+                    visibility: hidden !important;
+                    display: none !important;
+                    pointer-events: none !important;
+                }
+                input::placeholder {
+                    opacity: 0 !important;
+                    color: transparent !important;
+                }
+                </style>
                 <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:18px 20px;margin-bottom:16px;">
                     <div style="font-weight:700;color:#38BDF8;font-size:.9rem;margin-bottom:4px;">
                         LAYER 1: Developer / Owner Identity
                     </div>
-                    <div style="font-size:.78rem;color:#94A3B8;margin-bottom:10px;">
+                    <div style="font-size:.78rem;color:#94A3B8;margin-bottom:14px;">
                         Enter your username or corporate email and password.
-                    </div>
-                    <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.76rem;color:#BAE6FD;">
-                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;">info</span><strong>Default Credentials & Keys:</strong><br>
-                        &bull; <strong>Developer:</strong> <code>developer</code> / <code>ChangeMeDev2026!</code> (Key: <code>DEV-KEY-INIT-2026-ROOT-0001</code>)<br>
-                        &bull; <strong>Owner:</strong> <code>joydip_icy</code> or <code>joydip257</code> / <code>ChangeMeOnFirstLogin2026!</code> (Master Key: <code>ChangeMeMasterKey2026!</code>)
                     </div>
                 """, unsafe_allow_html=True)
 
                 with st.form("dev_login_form_layer1"):
-                    dev_user_input = st.text_input("Username or Corporate Email", placeholder="e.g. developer or joydip257")
-                    dev_pwd_input = st.text_input("Password", type="password", placeholder="Enter your password")
+                    dev_user_input = st.text_input("Username or Corporate Email", placeholder="")
+                    dev_pwd_input = st.text_input("Password", type="password", placeholder="")
                     sub1 = st.form_submit_button("Verify Identity (Layer 1)", icon=":material/arrow_forward:", use_container_width=True, type="primary")
 
                     if sub1:
@@ -335,14 +342,15 @@ def render_developer_login():
                 """, unsafe_allow_html=True)
 
                 with st.form("dev_register_form"):
-                    reg_fullname = st.text_input("Full Name", placeholder="e.g. Alex Morgan")
-                    reg_username = st.text_input("Desired Username", placeholder="e.g. amorgan")
-                    reg_email = st.text_input("Corporate Email", placeholder="e.g. amorgan@nassaucandy.com")
-                    reg_password = st.text_input("Password (min 8 chars)", type="password", placeholder="Enter secure password")
+                    reg_fullname = st.text_input("Full Name", placeholder="")
+                    reg_username = st.text_input("Desired Username", placeholder="")
+                    reg_email = st.text_input("Corporate Email", placeholder="")
+                    reg_password = st.text_input("Password (min 8 chars)", type="password", placeholder="")
                     reg_auth_key = st.text_input(
                         "Master Key or Registration Token",
                         type="password",
-                        value="ChangeMeMasterKey2026!",
+                        value="",
+                        placeholder="",
                         help="Enter the Master Management Key or an active Company Registration ID.",
                     )
                     sub_reg = st.form_submit_button("Register & Provision Developer Key", icon=":material/badge:", use_container_width=True, type="primary")
@@ -352,7 +360,7 @@ def render_developer_login():
                             st.error("Full Name, Username, Email, and Password are required.")
                         else:
                             from src.admin_security import validate_registration_id
-                            auth_token = (reg_auth_key or "ChangeMeMasterKey2026!").strip()
+                            auth_token = (reg_auth_key or "").strip()
                             is_master = verify_dev_master_key(auth_token)
                             is_reg_id, _, _ = validate_registration_id(auth_token)
                             if not is_master and not is_reg_id:
@@ -409,8 +417,7 @@ def render_developer_login():
                         Authenticated as <strong>{staged.get('full_name')}</strong> (<code>{staged.get('username')}</code>) • Role: <strong style="color:#F59E0B;">Owner / Team Lead</strong>
                     </div>
                     <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 12px;font-size:.76rem;color:#FDE68A;margin-bottom:14px;">
-                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">security</span><strong>Root Authority Detected:</strong> Owner accounts authenticate exclusively via the enterprise <strong>Master Management Key</strong> to unlock Developer IAM Governance and operational tools.
-                        <div style="margin-top:6px;font-size:.74rem;color:#FEF3C7;">Default Master Key: <code>ChangeMeMasterKey2026!</code></div>
+                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">security</span><strong>Root Authority Detected:</strong> Owner accounts authenticate via the enterprise <strong>Master Management Key</strong> to unlock Developer IAM Governance and operational tools.
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -418,7 +425,7 @@ def render_developer_login():
                     master_key_input = st.text_input(
                         "Enter Master Management Key",
                         type="password",
-                        placeholder="Enter your cryptographic master key",
+                        placeholder="",
                         help="Cryptographic Master Key required for Team Lead / Owner authentication.",
                     )
                     col_b1, col_b2 = st.columns([1, 1])
@@ -469,17 +476,13 @@ def render_developer_login():
                     <div style="font-size:.78rem;color:#94A3B8;margin:6px 0 14px 0;">
                         Authenticated as <strong>{staged.get('full_name')}</strong> (<code>{staged.get('username')}</code>) • Role: <strong style="color:#38BDF8;">Developer</strong>
                     </div>
-                    <div style="font-size:.75rem;color:#CBD5E1;margin-bottom:10px;">
-                        Enter your personal <strong>Developer Access Key</strong> (Format: <code>DEV-KEY-XXXX-XXXX-XXXX-XXXX</code>). Access keys are individual credentials assigned by the Team Lead / Owner and must never be shared.
-                    </div>
-                    <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.76rem;color:#BAE6FD;">
-                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;">key</span>
-                        <strong>Standard Developer Key:</strong> <code>DEV-KEY-INIT-2026-ROOT-0001</code>
+                    <div style="font-size:.75rem;color:#CBD5E1;margin-bottom:12px;">
+                        Enter your personal <strong>Developer Access Key</strong>. Access keys are individual credentials assigned by the Team Lead / Owner and must never be shared.
                     </div>
                 """, unsafe_allow_html=True)
 
                 with st.form("dev_login_form_layer2"):
-                    access_key_input = st.text_input("Developer Access Key", type="password", placeholder="DEV-KEY-XXXX-XXXX-XXXX-XXXX")
+                    access_key_input = st.text_input("Developer Access Key", type="password", placeholder="")
                     col_btn1, col_btn2 = st.columns([1, 1])
                     with col_btn1:
                         sub2 = st.form_submit_button("Validate Key (Layer 2)", icon=":material/arrow_forward:", use_container_width=True, type="primary")
@@ -805,7 +808,7 @@ def main():
                             with ak_c2:
                                 ak_custom = st.text_input(
                                     "Custom Access Key (Leave blank to auto-generate)",
-                                    placeholder="e.g. DEV-KEY-7A9B-4C2D-1E8F-9A0B",
+                                    placeholder="",
                                     key="ak_custom_t1",
                                 )
                                 ak_days = st.number_input("Validity Period (Days)", min_value=1, max_value=365, value=90, key="ak_days_t1")
@@ -935,7 +938,7 @@ def main():
         with kf1:
             stat_filter = st.selectbox("Status Filter", ["ALL", "ACTIVE", "EXPIRED", "REVOKED", "SUSPENDED", "COMPROMISED", "REPLACED"])
         with kf2:
-            search_key_txt = st.text_input("Search Developer / Key / Prefix", placeholder="e.g. lead_architect or DEV-KEY-")
+            search_key_txt = st.text_input("Search Developer / Key / Prefix", placeholder="")
 
         # Load keys: Owner sees all; Developer sees only their own keys
         query_dev_id = None if is_owner else dev_id
@@ -1103,8 +1106,8 @@ def main():
                     m_key_input = st.text_input(
                         "Enter Master Management Key",
                         type="password",
-                        value="ChangeMeMasterKey2026!",
-                        placeholder="Enter master management key to unlock",
+                        value="",
+                        placeholder="",
                         help="Cryptographic master key required for Developer Governance.",
                     )
                     sub_unlock = st.form_submit_button("Unlock Developer Governance", icon=":material/lock_open:", use_container_width=True, type="primary")
@@ -1138,13 +1141,13 @@ def main():
                     with st.form("provision_developer_form"):
                         cd_c1, cd_c2 = st.columns(2)
                         with cd_c1:
-                            new_dev_name = st.text_input("Full Name", placeholder="e.g. Sarah Connor")
-                            new_dev_user = st.text_input("Developer Username", placeholder="e.g. sconnor")
+                            new_dev_name = st.text_input("Full Name", placeholder="")
+                            new_dev_user = st.text_input("Developer Username", placeholder="")
                         with cd_c2:
-                            new_dev_email = st.text_input("Corporate Email", placeholder="e.g. sconnor@nassaucandy.com")
+                            new_dev_email = st.text_input("Corporate Email", placeholder="")
                             new_dev_role = st.selectbox("Assign IAM Role", ["Developer", "Owner"])
 
-                        new_dev_pass = st.text_input("Temporary Passphrase (min 8 chars)", type="password", placeholder="Enter strong temporary passphrase")
+                        new_dev_pass = st.text_input("Temporary Passphrase (min 8 chars)", type="password", placeholder="")
                         new_dev_sub = st.form_submit_button("Provision Developer Account", use_container_width=True, type="primary")
 
                         if new_dev_sub:
@@ -1198,7 +1201,7 @@ def main():
                             with k_c1:
                                 ak_cust = st.text_input(
                                     "Custom Key (Leave blank to auto-generate)",
-                                    placeholder="e.g. DEV-KEY-9X2A-K8L1-Q7P4-HF91",
+                                    placeholder="",
                                     key=f"ak_cust_{target_dev['id']}",
                                 )
                                 ak_lbl = st.text_input("Key Purpose / Label", value="Assigned Access Key", key=f"ak_lbl_{target_dev['id']}")
@@ -1503,13 +1506,13 @@ def main():
                 st.markdown("##### New Developer Account Registration")
                 cd_c1, cd_c2 = st.columns(2)
                 with cd_c1:
-                    new_dev_name = st.text_input("Full Name", placeholder="e.g. Sarah Connor")
-                    new_dev_user = st.text_input("Developer Username", placeholder="e.g. sconnor")
+                    new_dev_name = st.text_input("Full Name", placeholder="")
+                    new_dev_user = st.text_input("Developer Username", placeholder="")
                 with cd_c2:
-                    new_dev_email = st.text_input("Corporate Email", placeholder="e.g. sconnor@nassaucandy.com")
+                    new_dev_email = st.text_input("Corporate Email", placeholder="")
                     new_dev_role = st.selectbox("Assign Role", ["Developer", "Owner"])
 
-                new_dev_pass = st.text_input("Passphrase (min 8 chars)", type="password", placeholder="Enter strong passphrase")
+                new_dev_pass = st.text_input("Passphrase (min 8 chars)", type="password", placeholder="")
                 new_dev_sub = st.form_submit_button("Provision Developer Account & Generate Key", icon=":material/badge:", use_container_width=True, type="primary")
 
                 if new_dev_sub:
@@ -1564,7 +1567,7 @@ def main():
             with g_col2:
                 gen_days = st.number_input("Validity (Days)", min_value=1, max_value=365, value=90)
             with g_col3:
-                gen_notes = st.text_input("Key Purpose / Department Notes", placeholder="e.g. Finance Ops Team Lead")
+                gen_notes = st.text_input("Key Purpose / Department Notes", placeholder="")
 
             if st.button("Generate Authorized Key(s)", type="primary", use_container_width=True):
                 new_keys = dev_generate_registration_ids(
@@ -1581,7 +1584,7 @@ def main():
         with f_c1:
             stat_choice = st.selectbox("Status Scope", ["ALL", "ACTIVE", "USED", "REVOKED", "EXPIRED"])
         with f_c2:
-            search_tok = st.text_input("Search Key Token / User / Notes", placeholder="e.g. REG-")
+            search_tok = st.text_input("Search Key Token / User / Notes", placeholder="")
 
         keys_data = dev_list_registration_ids(status_filter=stat_choice, search_query=search_tok)
         if not keys_data:
@@ -1615,16 +1618,16 @@ def main():
             with st.form("dev_create_admin_form"):
                 ca1, ca2 = st.columns(2)
                 with ca1:
-                    ad_fullname = st.text_input("Full Name", placeholder="e.g. Marcus Vance")
-                    ad_username = st.text_input("Administrator Username", placeholder="e.g. mvance")
+                    ad_fullname = st.text_input("Full Name", placeholder="")
+                    ad_username = st.text_input("Administrator Username", placeholder="")
                 with ca2:
-                    ad_email = st.text_input("Corporate Email", placeholder="e.g. mvance@nassaucandy.com")
+                    ad_email = st.text_input("Corporate Email", placeholder="")
                     ad_role = st.selectbox("Role Assignment", ["Administrator", "Analyst", "Viewer", "Branch Admin"])
 
                 ad_password = st.text_input(
                     "Password (min 8 characters)",
                     type="password",
-                    placeholder="Enter secure initial password",
+                    placeholder="",
                 )
                 ad_sub = st.form_submit_button("Register Administrator", icon=":material/person_add:", use_container_width=True, type="primary")
 

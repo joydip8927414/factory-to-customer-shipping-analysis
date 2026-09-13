@@ -132,20 +132,24 @@ def render_auth_portal(palette: Dict[str, str], theme: str) -> None:
 
         # ── TAB 1: LOGIN ──
         with auth_tab1:
-            st.markdown(f"""
-            <div style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.8rem;">
-                <div style="font-weight:700;color:{palette['primary']};margin-bottom:3px;">
-                    <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">badge</span>Default Administrator Access
-                </div>
-                <div style="color:{sub_clr};font-size:.76rem;">
-                    Username: <strong style="color:{h1_clr};">admin</strong> &bull; Password: <strong style="color:{h1_clr};">ChangeMeAdmin2026!</strong>
-                </div>
-            </div>
+            st.markdown("""
+            <style>
+            input::-webkit-contacts-auto-fill-button,
+            input::-webkit-credentials-auto-fill-button {
+                visibility: hidden !important;
+                display: none !important;
+                pointer-events: none !important;
+            }
+            input::placeholder {
+                opacity: 0 !important;
+                color: transparent !important;
+            }
+            </style>
             """, unsafe_allow_html=True)
 
             with st.form("admin_login_form"):
-                username_input = st.text_input("Username or Official Email", placeholder="e.g. admin or john@nassaucandy.com")
-                password_input = st.text_input("Password", type="password", placeholder="Enter your password")
+                username_input = st.text_input("Username or Official Email", placeholder="")
+                password_input = st.text_input("Password", type="password", placeholder="")
                 remember_me = st.checkbox("Remember Me on this device", value=False)
                 login_submitted = st.form_submit_button("Secure Sign In", icon=":material/lock:", use_container_width=True, type="primary")
 
@@ -173,33 +177,18 @@ def render_auth_portal(palette: Dict[str, str], theme: str) -> None:
 
         # ── TAB 2: COMPANY REGISTRATION ID ONBOARDING ──
         with auth_tab2:
-            from src.db.models import RegistrationId
-            from src.db.session import get_db_session
-            active_key_hint = "REG-ADMIN-NASSAU-9902"
-            try:
-                with get_db_session() as session:
-                    active_rec = session.query(RegistrationId).filter_by(status="ACTIVE").first()
-                    if active_rec:
-                        active_key_hint = active_rec.token
-            except Exception:
-                pass
-
-            st.markdown(f"""
-            <div style="font-size:.78rem;color:#9AA0B9;margin-bottom:8px;">
-                Public registration is disabled. You must provide a company-issued <strong>Registration ID</strong> to establish an account.
-            </div>
-            <div style="background:rgba(67,233,123,0.08);border:1px solid rgba(67,233,123,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.78rem;">
-                <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;color:#43E97B;">vpn_key</span>
-                <span style="color:#86EFAC;font-weight:600;">Active Authorized Token:</span> <code style="font-weight:700;color:#FFF;">{active_key_hint}</code>
+            st.markdown("""
+            <div style="font-size:.78rem;color:#9AA0B9;margin-bottom:12px;">
+                Enter your company-issued <strong>Registration ID</strong> to establish an account.
             </div>
             """, unsafe_allow_html=True)
 
             with st.form("admin_register_form"):
-                reg_id_input = st.text_input("Company Registration ID (Required)", value=active_key_hint, placeholder=f"e.g. {active_key_hint}")
-                new_fullname = st.text_input("Full Name", placeholder="e.g. Sarah Jenkins")
-                new_username = st.text_input("Desired Username", placeholder="e.g. sjenkins")
-                new_email = st.text_input("Corporate Email", placeholder="e.g. sjenkins@nassaucandy.com")
-                new_password = st.text_input("Account Password (min 8 chars)", type="password", placeholder="Choose strong password")
+                reg_id_input = st.text_input("Company Registration ID", value="", placeholder="")
+                new_fullname = st.text_input("Full Name", placeholder="")
+                new_username = st.text_input("Desired Username", placeholder="")
+                new_email = st.text_input("Corporate Email", placeholder="")
+                new_password = st.text_input("Account Password (min 8 chars)", type="password", placeholder="")
                 new_role = st.selectbox("Requested Access Role", ["Administrator", "Analyst", "Viewer"], index=0)
 
                 register_submitted = st.form_submit_button("Validate Key & Register Account", icon=":material/security:", use_container_width=True)
@@ -502,7 +491,7 @@ def render(df: pd.DataFrame) -> None:
 
         g_c1, g_c2, g_c3, g_c4 = st.columns([1.5, 1.2, 1.2, 1.2])
         with g_c1:
-            q_search = st.text_input("Search Order ID / Product / City", placeholder="e.g. Wonka or CA-2024", key="grid_search")
+            q_search = st.text_input("Search Order ID / Product / City", placeholder="", key="grid_search")
         with g_c2:
             f_factory = st.selectbox("Factory", ["All"] + sorted(df["Factory"].dropna().unique().tolist()), key="grid_factory")
         with g_c3:
@@ -807,7 +796,7 @@ def render(df: pd.DataFrame) -> None:
         if is_full_admin:
             snap_c1, snap_c2 = st.columns([3, 1])
             with snap_c1:
-                snap_note = st.text_input("Manual Snapshot Description", placeholder="e.g. End of Quarter Logistics Audit Baseline")
+                snap_note = st.text_input("Manual Snapshot Description", placeholder="")
             with snap_c2:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 if st.button("Capture Snapshot", icon=":material/camera:", use_container_width=True):
