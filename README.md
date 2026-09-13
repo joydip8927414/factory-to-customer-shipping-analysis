@@ -5,6 +5,12 @@
 
 ---
 
+### 🌐 Live Production Deployments
+- 📊 **Main Logistics Intelligence Platform**: [https://factory-shipping-analytics-by-joydip-das.streamlit.app/](https://factory-shipping-analytics-by-joydip-das.streamlit.app/)
+- 🔐 **Developer & Governance Portal**: [https://factory-to-customer-shipping-analysis-dev-manage-by-joydip-das.streamlit.app/](https://factory-to-customer-shipping-analysis-dev-manage-by-joydip-das.streamlit.app/)
+
+---
+
 ## 📋 Table of Contents
 
 1. [Platform Overview](#platform-overview)
@@ -203,6 +209,17 @@ Open **http://localhost:8501** in your browser.
   - Light Theme (Crisp Off-White `#F8FAFC`, Pure White `#FFFFFF`)
   - System Theme Auto-Detection
 - **Theme-Aware Charts:** All Plotly figures dynamically adjust template styling, grid colors, and font rendering based on active theme state.
+
+---
+
+## 👨‍💻 Developer & Internship Project Details
+- **Developer / Analyst:** **Joydip Das**
+- **Discipline:** B.Tech in Electronics and Communication Engineering (ECE)
+- **Host Organization:** **Unified Mentor** (Industry Internship Program)
+- **Duration:** August 15, 2026 – September 15, 2026
+- **Live Production URLs:**
+  - 📊 Main Application: [https://factory-shipping-analytics-by-joydip-das.streamlit.app/](https://factory-shipping-analytics-by-joydip-das.streamlit.app/)
+  - 🔐 Developer Control Portal: [https://factory-to-customer-shipping-analysis-dev-manage-by-joydip-das.streamlit.app/](https://factory-to-customer-shipping-analysis-dev-manage-by-joydip-das.streamlit.app/)
 
 ---
 

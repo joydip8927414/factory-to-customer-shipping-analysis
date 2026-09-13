@@ -310,6 +310,99 @@ def ensure_root_owner_and_system_security() -> None:
                 if r_dev:
                     dev_acct.role_id = r_dev.id
 
+            session.flush()
+
+            # Ensure developer has an active DeveloperKey and trusted workstation
+            if dev_acct:
+                dev_key = session.execute(
+                    select(DeveloperKey).where(
+                        DeveloperKey.developer_id == dev_acct.id,
+                        DeveloperKey.status == "ACTIVE",
+                    )
+                ).scalar_one_or_none()
+                if not dev_key:
+                    session.add(DeveloperKey(
+                        developer_id=dev_acct.id,
+                        name="Primary Root Access Key",
+                        key_prefix="DEV-KEY-INIT",
+                        key_hash=hash_dev_password("DEV-KEY-INIT-2026-ROOT-0001"),
+                        status="ACTIVE",
+                        key_version=1,
+                        created_by="System",
+                        created_at=now,
+                        expires_at=now + timedelta(days=365),
+                    ))
+
+                dev_ws = session.execute(
+                    select(DeveloperDevice).where(
+                        DeveloperDevice.developer_id == dev_acct.id,
+                        DeveloperDevice.device_fingerprint == fp,
+                    )
+                ).scalar_one_or_none()
+                if not dev_ws:
+                    session.add(DeveloperDevice(
+                        developer_id=dev_acct.id,
+                        device_fingerprint=fp,
+                        device_name=f"Developer Workstation ({platform.node()})",
+                        browser="Local Workstation",
+                        os=platform.system(),
+                        ip_address="127.0.0.1",
+                        status="TRUSTED",
+                        first_login_at=now,
+                        last_login_at=now,
+                        created_at=now,
+                    ))
+
+            # Maintain joydip257 as an authorized Owner account
+            jd_acct = session.execute(select(Developer).where(Developer.username == "joydip257")).scalar_one_or_none()
+            if jd_acct:
+                jd_acct.role = "Owner"
+                jd_acct.is_owner = True
+                jd_acct.status = "ACTIVE"
+                jd_acct.is_active = True
+                jd_acct.failed_logins = 0
+                jd_acct.locked_until = None
+                if r_owner:
+                    jd_acct.role_id = r_owner.id
+                jd_key = session.execute(
+                    select(DeveloperKey).where(
+                        DeveloperKey.developer_id == jd_acct.id,
+                        DeveloperKey.status == "ACTIVE",
+                    )
+                ).scalar_one_or_none()
+                if not jd_key:
+                    session.add(DeveloperKey(
+                        developer_id=jd_acct.id,
+                        name="Owner Management Access Key",
+                        key_prefix="DEV-KEY-JDAS",
+                        key_hash=hash_dev_password("DEV-KEY-JDAS-2026-LEAD-0001"),
+                        status="ACTIVE",
+                        key_version=1,
+                        created_by="System",
+                        created_at=now,
+                        expires_at=now + timedelta(days=365),
+                    ))
+
+                jd_ws = session.execute(
+                    select(DeveloperDevice).where(
+                        DeveloperDevice.developer_id == jd_acct.id,
+                        DeveloperDevice.device_fingerprint == fp,
+                    )
+                ).scalar_one_or_none()
+                if not jd_ws:
+                    session.add(DeveloperDevice(
+                        developer_id=jd_acct.id,
+                        device_fingerprint=fp,
+                        device_name=f"Lead Workstation ({platform.node()})",
+                        browser="Local Workstation",
+                        os=platform.system(),
+                        ip_address="127.0.0.1",
+                        status="TRUSTED",
+                        first_login_at=now,
+                        last_login_at=now,
+                        created_at=now,
+                    ))
+
             session.commit()
     except Exception as e:
         logger.warning("Failed to verify root owner bootstrap: %s", e)

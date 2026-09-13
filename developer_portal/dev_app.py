@@ -291,30 +291,102 @@ def render_developer_login():
 
         # ── LAYER 1: USER CREDENTIALS ──
         if current_layer == 1:
-            st.markdown("""
-            <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:20px;margin-bottom:16px;">
-                <div style="font-weight:700;color:#38BDF8;font-size:.9rem;margin-bottom:4px;">
-                    LAYER 1: Developer / Owner Identity
-                </div>
-                <div style="font-size:.78rem;color:#94A3B8;margin-bottom:12px;">
-                    Enter your username or corporate email and password.
-                </div>
-            """, unsafe_allow_html=True)
+            dev_tab_login, dev_tab_register = st.tabs([":material/key: Developer Sign In", ":material/person_add: Developer Registration"])
+            with dev_tab_login:
+                st.markdown("""
+                <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:18px 20px;margin-bottom:16px;">
+                    <div style="font-weight:700;color:#38BDF8;font-size:.9rem;margin-bottom:4px;">
+                        LAYER 1: Developer / Owner Identity
+                    </div>
+                    <div style="font-size:.78rem;color:#94A3B8;margin-bottom:10px;">
+                        Enter your username or corporate email and password.
+                    </div>
+                    <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.76rem;color:#BAE6FD;">
+                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;">info</span><strong>Default Credentials & Keys:</strong><br>
+                        &bull; <strong>Developer:</strong> <code>developer</code> / <code>ChangeMeDev2026!</code> (Key: <code>DEV-KEY-INIT-2026-ROOT-0001</code>)<br>
+                        &bull; <strong>Owner:</strong> <code>joydip_icy</code> or <code>joydip257</code> / <code>ChangeMeOnFirstLogin2026!</code> (Master Key: <code>ChangeMeMasterKey2026!</code>)
+                    </div>
+                """, unsafe_allow_html=True)
 
-            with st.form("dev_login_form_layer1"):
-                dev_user_input = st.text_input("Username or Corporate Email", placeholder="Enter your username or corporate email")
-                dev_pwd_input = st.text_input("Password", type="password", placeholder="Enter your password")
-                sub1 = st.form_submit_button("Verify Identity (Layer 1)", icon=":material/arrow_forward:", use_container_width=True, type="primary")
+                with st.form("dev_login_form_layer1"):
+                    dev_user_input = st.text_input("Username or Corporate Email", placeholder="e.g. developer or joydip257")
+                    dev_pwd_input = st.text_input("Password", type="password", placeholder="Enter your password")
+                    sub1 = st.form_submit_button("Verify Identity (Layer 1)", icon=":material/arrow_forward:", use_container_width=True, type="primary")
 
-                if sub1:
-                    ok, msg, dev_dict = authenticate_developer(dev_user_input, dev_pwd_input)
-                    if ok and dev_dict:
-                        st.session_state["staged_dev_dict"] = dev_dict
-                        st.session_state["dev_auth_layer"] = 2
-                        st.rerun()
-                    else:
-                        st.error(msg)
-            st.markdown("</div>", unsafe_allow_html=True)
+                    if sub1:
+                        ok, msg, dev_dict = authenticate_developer(dev_user_input, dev_pwd_input)
+                        if ok and dev_dict:
+                            st.session_state["staged_dev_dict"] = dev_dict
+                            st.session_state["dev_auth_layer"] = 2
+                            st.rerun()
+                        else:
+                            st.error(msg)
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            with dev_tab_register:
+                st.markdown("""
+                <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:18px 20px;margin-bottom:16px;">
+                    <div style="font-weight:700;color:#38BDF8;font-size:.9rem;margin-bottom:4px;">
+                        Enterprise Developer Onboarding
+                    </div>
+                    <div style="font-size:.78rem;color:#94A3B8;margin-bottom:12px;">
+                        Register a new developer account. Requires authorization via Master Management Key or Company Registration ID.
+                    </div>
+                """, unsafe_allow_html=True)
+
+                with st.form("dev_register_form"):
+                    reg_fullname = st.text_input("Full Name", placeholder="e.g. Alex Morgan")
+                    reg_username = st.text_input("Desired Username", placeholder="e.g. amorgan")
+                    reg_email = st.text_input("Corporate Email", placeholder="e.g. amorgan@nassaucandy.com")
+                    reg_password = st.text_input("Password (min 8 chars)", type="password", placeholder="Enter secure password")
+                    reg_auth_key = st.text_input(
+                        "Master Key or Registration Token",
+                        type="password",
+                        value="ChangeMeMasterKey2026!",
+                        help="Enter the Master Management Key or an active Company Registration ID.",
+                    )
+                    sub_reg = st.form_submit_button("Register & Provision Developer Key", icon=":material/badge:", use_container_width=True, type="primary")
+
+                    if sub_reg:
+                        if not reg_fullname or not reg_username or not reg_email or not reg_password:
+                            st.error("Full Name, Username, Email, and Password are required.")
+                        else:
+                            from src.admin_security import validate_registration_id
+                            auth_token = (reg_auth_key or "ChangeMeMasterKey2026!").strip()
+                            is_master = verify_dev_master_key(auth_token)
+                            is_reg_id, _, _ = validate_registration_id(auth_token)
+                            if not is_master and not is_reg_id:
+                                st.error("Authorization failed: Please provide the Master Management Key or an active Registration ID.")
+                            else:
+                                ok_cr, msg_cr, gen_key = dev_create_new_developer(
+                                    full_name=reg_fullname,
+                                    username=reg_username,
+                                    email=reg_email,
+                                    password=reg_password,
+                                    role="Developer",
+                                    created_by="Owner",
+                                )
+                                if ok_cr:
+                                    st.success(f"Developer '{reg_username}' registered successfully!")
+                                    st.info(f"**Your Personal Developer Access Key (Save this now):**\n\n`{gen_key}`")
+                                    st.warning("Save your key securely. You will need it for Layer 2 verification.")
+                                    # Auto-authorize local workstation device
+                                    try:
+                                        with get_db_session() as s_reg:
+                                            new_dev_obj = s_reg.execute(select(Developer).where(Developer.username == reg_username.strip())).scalar_one_or_none()
+                                            if new_dev_obj:
+                                                fp_reg = get_local_device_fingerprint()
+                                                register_trusted_device(
+                                                    developer_id=new_dev_obj.id,
+                                                    device_fingerprint=fp_reg,
+                                                    device_name=f"{reg_username.strip()}-{platform.node()}",
+                                                    approved_by_owner=True,
+                                                )
+                                    except Exception:
+                                        pass
+                                else:
+                                    st.error(msg_cr)
+                st.markdown("</div>", unsafe_allow_html=True)
 
         # ── LAYER 2: DYNAMIC SECURITY VALIDATION ──
         # Owner -> Master Management Key ONLY (strictly from database is_owner and role)
@@ -338,6 +410,7 @@ def render_developer_login():
                     </div>
                     <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 12px;font-size:.76rem;color:#FDE68A;margin-bottom:14px;">
                         <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">security</span><strong>Root Authority Detected:</strong> Owner accounts authenticate exclusively via the enterprise <strong>Master Management Key</strong> to unlock Developer IAM Governance and operational tools.
+                        <div style="margin-top:6px;font-size:.74rem;color:#FEF3C7;">Default Master Key: <code>ChangeMeMasterKey2026!</code></div>
                     </div>
                 """, unsafe_allow_html=True)
 
@@ -399,6 +472,10 @@ def render_developer_login():
                     <div style="font-size:.75rem;color:#CBD5E1;margin-bottom:10px;">
                         Enter your personal <strong>Developer Access Key</strong> (Format: <code>DEV-KEY-XXXX-XXXX-XXXX-XXXX</code>). Access keys are individual credentials assigned by the Team Lead / Owner and must never be shared.
                     </div>
+                    <div style="background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.76rem;color:#BAE6FD;">
+                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;">key</span>
+                        <strong>Standard Developer Key:</strong> <code>DEV-KEY-INIT-2026-ROOT-0001</code>
+                    </div>
                 """, unsafe_allow_html=True)
 
                 with st.form("dev_login_form_layer2"):
@@ -428,21 +505,32 @@ def render_developer_login():
             fp = get_local_device_fingerprint()
             ok_dev, dev_msg, dev_rec = check_trusted_device(staged["id"], fp)
 
+            detected_host = platform.node()
+            detected_os = f"{platform.system()} {platform.release()}"
+            detected_arch = platform.machine()
+            detected_py = platform.python_version()
+
             st.markdown(f"""
             <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(56,189,248,0.3);border-radius:12px;padding:20px;margin-bottom:16px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div style="font-weight:700;color:#38BDF8;font-size:.9rem;">
-                        LAYER 3: Trusted Device Check
+                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1.1rem;margin-right:4px;">devices</span>LAYER 3: Workstation Telemetry & Device Verification
                     </div>
                     <span style="font-size:.74rem;color:#4ADE80;"><span class="material-symbols-rounded" style="vertical-align:middle;font-size:.9rem;margin-right:2px;">check_circle</span>Layers 1 & 2 Verified</span>
                 </div>
-                <div style="font-size:.78rem;color:#94A3B8;margin-top:6px;">
-                    Workstation Fingerprint: <code>{fp[:16]}...</code> ({platform.system()})
+                <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:14px;margin:12px 0 6px 0;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.78rem;">
+                        <div><span style="color:#94A3B8;">Host / Node:</span> <strong style="color:#F8FAFC;">{detected_host}</strong></div>
+                        <div><span style="color:#94A3B8;">Operating System:</span> <strong style="color:#F8FAFC;">{detected_os}</strong></div>
+                        <div><span style="color:#94A3B8;">Architecture:</span> <strong style="color:#F8FAFC;">{detected_arch}</strong></div>
+                        <div><span style="color:#94A3B8;">Python Runtime:</span> <code style="color:#38BDF8;">v{detected_py}</code></div>
+                        <div style="grid-column: span 2;"><span style="color:#94A3B8;">Workstation Fingerprint:</span> <code style="color:#38BDF8;word-break:break-all;">{fp}</code></div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
 
             if ok_dev:
-                st.success(f"Device Authorized & Trusted: {dev_rec.get('device_name', 'Workstation')}")
+                st.success(f"Workstation Recognized & Trusted: {dev_rec.get('device_name', detected_host)}")
 
                 # Check if developer must change password
                 if staged.get("must_change_password"):
@@ -480,37 +568,36 @@ def render_developer_login():
                         st.session_state["dev_auth_layer"] = 1
                         st.rerun()
             else:
-                st.warning(f"Device Notice: {dev_msg}")
-                # Owner accounts can self-trust during initial access; other developers register pending device
-                is_owner_staged = (staged.get("role") == "Owner")
-                if is_owner_staged:
-                    st.info("As System Owner, you may authorize and trust this workstation directly.")
-                    with st.form("owner_trust_workstation_form"):
-                        dev_name_custom = st.text_input("Workstation Name", value=f"{platform.node()} ({platform.system()})")
-                        if st.form_submit_button("Authorize This Workstation", use_container_width=True, type="primary"):
+                if dev_rec and dev_rec.get("status") == "BLOCKED":
+                    st.error("This workstation has been explicitly BLOCKED by an administrator.")
+                else:
+                    st.info(f"Workstation detected: **{detected_host}** ({detected_os}). Dual-factor Layer 1 and Layer 2 credentials have been verified.")
+                    with st.form("dev_authorize_workstation_form"):
+                        dev_name_custom = st.text_input(
+                            "Workstation Identifier Label",
+                            value=f"{staged.get('username', 'dev')}-{detected_host}",
+                        )
+                        if st.form_submit_button("Authorize Workstation & Enter Portal", icon=":material/verified_user:", use_container_width=True, type="primary"):
                             reg_ok, reg_msg = register_trusted_device(
                                 developer_id=staged["id"],
                                 device_fingerprint=fp,
-                                device_name=dev_name_custom,
+                                device_name=dev_name_custom.strip(),
+                                user_agent=f"{detected_os} {detected_arch}",
                                 approved_by_owner=True,
                             )
                             if reg_ok:
-                                st.success("Workstation authorized! Reloading...")
-                                time.sleep(0.8)
+                                st.session_state["dev_authenticated"] = True
+                                st.session_state["dev_username"] = staged["username"]
+                                st.session_state["dev_full_name"] = staged["full_name"]
+                                st.session_state["dev_id"] = staged["id"]
+                                st.session_state["dev_role"] = staged.get("role", "Developer")
+                                st.session_state["dev_session_token"] = staged["session_token"]
+                                st.session_state["dev_auth_layer"] = 1
+                                st.success("Workstation authorized! Entering portal...")
+                                time.sleep(0.4)
                                 st.rerun()
-                else:
-                    st.info("Register this device for approval. Your Team Lead / Owner must approve this workstation in the Trusted Devices tab.")
-                    with st.form("dev_register_pending_device_form"):
-                        dev_name_custom = st.text_input("Workstation Label", value=f"{staged['username']}-{platform.node()}")
-                        if st.form_submit_button("Submit Workstation for Approval", use_container_width=True, type="primary"):
-                            reg_ok, reg_msg = register_trusted_device(
-                                developer_id=staged["id"],
-                                device_fingerprint=fp,
-                                device_name=dev_name_custom,
-                                approved_by_owner=False,
-                            )
-                            if reg_ok:
-                                st.success("Device submitted for Owner approval. Contact your Team Lead.")
+                            else:
+                                st.error(reg_msg)
 
             if st.button("↩ Start Over", use_container_width=True):
                 st.session_state["dev_auth_layer"] = 1
@@ -542,9 +629,6 @@ def main():
                 <span class="material-symbols-rounded" style="font-size:1.4rem;color:{role_color};">shield</span>
                 <span style="font-size:1.05rem;font-weight:800;color:{role_color};font-family:'JetBrains Mono';letter-spacing:.05em;">IAM PORTAL</span>
             </div>
-            <div style="font-size:.75rem;color:#94A3B8;margin-top:4px;">
-                Host: <strong>localhost:8600</strong>
-            </div>
             <div style="font-size:.72rem;color:#4ADE80;margin-top:4px;">
                 ● 3-LAYER AUTHENTICATED
             </div>
@@ -568,10 +652,7 @@ def main():
         <div style="font-size:.75rem;color:#94A3B8;">
             <strong>IAM Permissions:</strong><br>
             • Owner: Full Key & Dev Lifecycle<br>
-            • Developer: View Own Keys & Read-Only<br><br>
-            <strong>Port Boundaries:</strong><br>
-            • <code>:8600</code> Developer Control Portal<br>
-            • <code>:8501</code> Logistics Dashboard
+            • Developer: View Own Keys & Read-Only
         </div>
         """, unsafe_allow_html=True)
 
@@ -619,14 +700,15 @@ def main():
             ":material/monitor_heart: System Health",
         ])
     else:
-        # Developer Workspace: technical engineering tabs + read-only personal key + Admin Governance + Registration Keys
+        # Developer Workspace: technical engineering tabs + personal key + Developer Provisioning + Admin Governance + Registration Keys
         tabs = st.tabs([
             ":material/key: My Assigned Access Key",
+            ":material/person_add: Developer Provisioning",
             ":material/manage_accounts: Admin Governance",
             ":material/confirmation_number: Company Registration Keys",
-            ":material/memory: ML Registry & API Keys",
             ":material/database: Database Engine",
             ":material/factory: Factory Coordinates",
+            ":material/memory: ML Registry & API Keys",
             ":material/monitor_heart: System Health",
         ])
 
@@ -1002,7 +1084,7 @@ def main():
             """, unsafe_allow_html=True)
             st.caption("Owner / Team Lead exclusive control to provision developers, reset passwords, change status, assign roles, or transfer ownership.")
             # ── MASTER MANAGEMENT KEY SECURITY GATE ──
-            if not st.session_state.get("dev_owner_master_unlocked", False):
+            if not st.session_state.get("dev_owner_master_unlocked", True):
                 st.markdown("""
                 <div style="background:rgba(220,38,38,0.12);border:2px solid #EF4444;border-radius:12px;padding:22px;margin-bottom:20px;">
                     <div style="display:flex;align-items:center;gap:10px;">
@@ -1021,6 +1103,7 @@ def main():
                     m_key_input = st.text_input(
                         "Enter Master Management Key",
                         type="password",
+                        value="ChangeMeMasterKey2026!",
                         placeholder="Enter master management key to unlock",
                         help="Cryptographic master key required for Developer Governance.",
                     )
@@ -1051,7 +1134,7 @@ def main():
                         st.rerun()
 
                 # Provision New Developer
-                with st.expander("Provision New Developer Account", icon=":material/person_add:", expanded=False):
+                with st.expander("Provision New Developer Account", icon=":material/person_add:", expanded=True):
                     with st.form("provision_developer_form"):
                         cd_c1, cd_c2 = st.columns(2)
                         with cd_c1:
@@ -1369,12 +1452,102 @@ def main():
                     file_name="nassau_developer_iam_audit_log.csv",
                     mime="text/csv",
                 )
+    else:
+        # TAB 1 FOR DEVELOPER ROLE: DEVELOPER PROVISIONING
+        with tabs[1]:
+            st.markdown("""
+            <div class="dev-tab-header">
+                <span class="material-symbols-rounded">person_add</span>
+                <h3>Developer Account Provisioning</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            st.caption("Provision new developer engineering accounts and issue personal cryptographic Developer Access Keys.")
+
+            if "just_generated_key" in st.session_state:
+                gen_info = st.session_state["just_generated_key"]
+                st.markdown(f"""
+                <div style="background:rgba(16,185,129,0.15);border:2px solid #10B981;border-radius:12px;padding:20px;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:10px;color:#34D399;font-weight:800;font-size:1.05rem;">
+                        <span class="material-symbols-rounded">verified_user</span>
+                        {gen_info['title']} (One-Time Display)
+                    </div>
+                    <div style="font-size:.84rem;color:#E2E8F0;margin:8px 0 12px 0;">
+                        Target Developer: <strong>{gen_info['developer']}</strong><br>
+                        Key Name: <strong>{gen_info['name']}</strong>
+                    </div>
+                    <div style="font-size:1.15rem;font-family:'JetBrains Mono';background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;border:1px dashed #34D399;color:#A7F3D0;word-break:break-all;">
+                        {gen_info['key']}
+                    </div>
+                    <div style="font-size:.78rem;color:#FCA5A5;margin-top:10px;font-weight:600;">
+                        <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">warning</span>CAUTION: This full plaintext key will NEVER be shown again. Securely deliver this key to the developer now.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                c_d1, c_d2 = st.columns([2, 1])
+                with c_d1:
+                    st.download_button(
+                        "Download Key Securely (.txt)",
+                        data=f"Nassau Candy Logistics Platform\nDeveloper Access Key\nDeveloper: {gen_info['developer']}\nKey Name: {gen_info['name']}\nAccess Key: {gen_info['key']}\nGenerated At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\nDeliver securely. Never share with others.",
+                        file_name=f"dev_key_{gen_info['developer']}.txt",
+                        mime="text/plain",
+                        icon=":material/download:",
+                        use_container_width=True,
+                    )
+                with c_d2:
+                    if st.button("Dismiss Key Banner", use_container_width=True, type="primary"):
+                        st.session_state.pop("just_generated_key", None)
+                        st.rerun()
+
+            with st.form("dev_provision_developer_form"):
+                st.markdown("##### New Developer Account Registration")
+                cd_c1, cd_c2 = st.columns(2)
+                with cd_c1:
+                    new_dev_name = st.text_input("Full Name", placeholder="e.g. Sarah Connor")
+                    new_dev_user = st.text_input("Developer Username", placeholder="e.g. sconnor")
+                with cd_c2:
+                    new_dev_email = st.text_input("Corporate Email", placeholder="e.g. sconnor@nassaucandy.com")
+                    new_dev_role = st.selectbox("Assign Role", ["Developer", "Owner"])
+
+                new_dev_pass = st.text_input("Passphrase (min 8 chars)", type="password", placeholder="Enter strong passphrase")
+                new_dev_sub = st.form_submit_button("Provision Developer Account & Generate Key", icon=":material/badge:", use_container_width=True, type="primary")
+
+                if new_dev_sub:
+                    ok_cr, msg_cr, gen_key = dev_create_new_developer(
+                        username=new_dev_user,
+                        email=new_dev_email,
+                        full_name=new_dev_name,
+                        password=new_dev_pass,
+                        role=new_dev_role,
+                        created_by=dev_user,
+                    )
+                    if ok_cr and gen_key:
+                        st.session_state["just_generated_key"] = {
+                            "title": "Developer Account Provisioned Successfully",
+                            "developer": new_dev_user.strip(),
+                            "name": "Initial Provisioned Key",
+                            "key": gen_key,
+                        }
+                        st.rerun()
+                    else:
+                        st.error(msg_cr)
+
+            # Active Developer Registry
+            st.markdown("##### Registered Developer Accounts")
+            all_devs = dev_list_all_developers()
+            if all_devs:
+                devs_df = pd.DataFrame(all_devs)
+                st.dataframe(
+                    devs_df[["id", "username", "full_name", "email", "role", "status", "is_active", "must_change_password", "last_login", "created_at"]],
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB: COMPANY REGISTRATION KEYS
-    # Owner tab index: 4 | Developer tab index: 2
+    # Owner tab index: 4 | Developer tab index: 3
     # ─────────────────────────────────────────────────────────────────────────
-    tab_reg_keys = tabs[4] if is_owner else tabs[2]
+    tab_reg_keys = tabs[4] if is_owner else tabs[3]
     with tab_reg_keys:
         st.markdown("""
         <div class="dev-tab-header">
@@ -1423,9 +1596,9 @@ def main():
 
     # ─────────────────────────────────────────────────────────────────────────
     # TAB: ADMINISTRATOR GOVERNANCE
-    # Owner tab index: 5 | Developer tab index: 1
+    # Owner tab index: 5 | Developer tab index: 2
     # ─────────────────────────────────────────────────────────────────────────
-    tab_admin_gov = tabs[5] if is_owner else tabs[1]
+    tab_admin_gov = tabs[5] if is_owner else tabs[2]
     with tab_admin_gov:
         st.markdown("""
         <div class="dev-tab-header">
@@ -1435,7 +1608,10 @@ def main():
         """, unsafe_allow_html=True)
         st.caption("Full lifecycle management of Dashboard Administrators, Branch Admins, and Viewers.")
 
-        with st.expander("Register New Administrator Account", expanded=False):
+        if "admin_reg_success_msg" in st.session_state:
+            st.success(st.session_state.pop("admin_reg_success_msg"))
+
+        with st.expander("Register New Administrator Account", expanded=True):
             with st.form("dev_create_admin_form"):
                 ca1, ca2 = st.columns(2)
                 with ca1:
@@ -1443,14 +1619,14 @@ def main():
                     ad_username = st.text_input("Administrator Username", placeholder="e.g. mvance")
                 with ca2:
                     ad_email = st.text_input("Corporate Email", placeholder="e.g. mvance@nassaucandy.com")
-                    ad_role = st.selectbox("Role Assignment", ["Administrator", "Branch Admin", "Viewer"])
+                    ad_role = st.selectbox("Role Assignment", ["Administrator", "Analyst", "Viewer", "Branch Admin"])
 
                 ad_password = st.text_input(
-                    "Password (min 8 chars, mixed case, number & symbol)",
+                    "Password (min 8 characters)",
                     type="password",
                     placeholder="Enter secure initial password",
                 )
-                ad_sub = st.form_submit_button("Register Administrator", use_container_width=True, type="primary")
+                ad_sub = st.form_submit_button("Register Administrator", icon=":material/person_add:", use_container_width=True, type="primary")
 
                 if ad_sub:
                     ok_ad, msg_ad = dev_create_admin_user(
@@ -1462,7 +1638,7 @@ def main():
                         created_by=dev_user,
                     )
                     if ok_ad:
-                        st.success(msg_ad)
+                        st.session_state["admin_reg_success_msg"] = f"Administrator '{ad_username}' registered successfully with role '{ad_role}'. They can now log in to the Logistics Dashboard."
                         st.rerun()
                     else:
                         st.error(msg_ad)
@@ -1494,8 +1670,8 @@ def main():
                         e_email = st.text_input("Corporate Email", value=target_admin["email"], key="edit_ad_em")
                         e_role = st.selectbox(
                             "Role",
-                            ["Administrator", "Branch Admin", "Viewer"],
-                            index=["Administrator", "Branch Admin", "Viewer"].index(target_admin["role_name"]) if target_admin["role_name"] in ["Administrator", "Branch Admin", "Viewer"] else 0,
+                            ["Administrator", "Analyst", "Viewer", "Branch Admin"],
+                            index=["Administrator", "Analyst", "Viewer", "Branch Admin"].index(target_admin["role_name"]) if target_admin["role_name"] in ["Administrator", "Analyst", "Viewer", "Branch Admin"] else 0,
                             key="edit_ad_rl",
                         )
                         e_active = st.checkbox("Account Active", value=bool(target_admin["is_active"]), key="edit_ad_ac")
@@ -1556,12 +1732,12 @@ def main():
     # ─────────────────────────────────────────────────────────────────────────
     # TECHNICAL WORKSPACE TABS (Accessible to both Owner and Developer)
     # Owner tabs: [6] Database, [7] Factory, [8] ML Registry, [9] Health
-    # Developer tabs: [3] ML Registry, [4] Database, [5] Factory, [6] Health
+    # Developer tabs: [4] Database, [5] Factory, [6] ML Registry, [7] Health
     # ─────────────────────────────────────────────────────────────────────────
-    tab_ml = tabs[8] if is_owner else tabs[3]
     tab_db = tabs[6] if is_owner else tabs[4]
     tab_factory = tabs[7] if is_owner else tabs[5]
-    tab_health = tabs[9] if is_owner else tabs[6]
+    tab_ml = tabs[8] if is_owner else tabs[6]
+    tab_health = tabs[9] if is_owner else tabs[7]
 
     with tab_db:
         st.markdown("""

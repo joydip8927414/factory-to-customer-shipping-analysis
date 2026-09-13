@@ -21,6 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.admin_security import register_admin_user, validate_registration_id
+from src.db.models import Developer
+from src.db.session import get_db_session
 from src.developer.dev_security import (
     authenticate_developer,
     hash_dev_password,
@@ -39,6 +41,14 @@ from src.developer.dev_service import (
 
 
 class TestDeveloperPortal(unittest.TestCase):
+
+    def setUp(self):
+        with get_db_session() as session:
+            dev = session.query(Developer).filter_by(username="developer").first()
+            if dev:
+                dev.failed_logins = 0
+                dev.locked_until = None
+                session.commit()
 
     def test_01_developer_authentication(self):
         # Verify root developer credentials

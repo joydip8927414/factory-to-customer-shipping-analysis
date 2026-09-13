@@ -132,6 +132,17 @@ def render_auth_portal(palette: Dict[str, str], theme: str) -> None:
 
         # ── TAB 1: LOGIN ──
         with auth_tab1:
+            st.markdown(f"""
+            <div style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.8rem;">
+                <div style="font-weight:700;color:{palette['primary']};margin-bottom:3px;">
+                    <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1rem;margin-right:4px;">badge</span>Default Administrator Access
+                </div>
+                <div style="color:{sub_clr};font-size:.76rem;">
+                    Username: <strong style="color:{h1_clr};">admin</strong> &bull; Password: <strong style="color:{h1_clr};">ChangeMeAdmin2026!</strong>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
             with st.form("admin_login_form"):
                 username_input = st.text_input("Username or Official Email", placeholder="e.g. admin or john@nassaucandy.com")
                 password_input = st.text_input("Password", type="password", placeholder="Enter your password")
@@ -162,14 +173,29 @@ def render_auth_portal(palette: Dict[str, str], theme: str) -> None:
 
         # ── TAB 2: COMPANY REGISTRATION ID ONBOARDING ──
         with auth_tab2:
-            st.markdown("""
-            <div style="font-size:.78rem;color:#9AA0B9;margin-bottom:10px;">
+            from src.db.models import RegistrationId
+            from src.db.session import get_db_session
+            active_key_hint = "REG-ADMIN-NASSAU-9902"
+            try:
+                with get_db_session() as session:
+                    active_rec = session.query(RegistrationId).filter_by(status="ACTIVE").first()
+                    if active_rec:
+                        active_key_hint = active_rec.token
+            except Exception:
+                pass
+
+            st.markdown(f"""
+            <div style="font-size:.78rem;color:#9AA0B9;margin-bottom:8px;">
                 Public registration is disabled. You must provide a company-issued <strong>Registration ID</strong> to establish an account.
+            </div>
+            <div style="background:rgba(67,233,123,0.08);border:1px solid rgba(67,233,123,0.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.78rem;">
+                <span class="material-symbols-rounded" style="vertical-align:middle;font-size:.95rem;margin-right:4px;color:#43E97B;">vpn_key</span>
+                <span style="color:#86EFAC;font-weight:600;">Active Authorized Token:</span> <code style="font-weight:700;color:#FFF;">{active_key_hint}</code>
             </div>
             """, unsafe_allow_html=True)
 
             with st.form("admin_register_form"):
-                reg_id_input = st.text_input("Company Registration ID (Required)", placeholder="e.g. REG-ADMIN-NASSAU-9901")
+                reg_id_input = st.text_input("Company Registration ID (Required)", value=active_key_hint, placeholder=f"e.g. {active_key_hint}")
                 new_fullname = st.text_input("Full Name", placeholder="e.g. Sarah Jenkins")
                 new_username = st.text_input("Desired Username", placeholder="e.g. sjenkins")
                 new_email = st.text_input("Corporate Email", placeholder="e.g. sjenkins@nassaucandy.com")

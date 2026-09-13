@@ -30,6 +30,7 @@ from src.db.models import (
     DashboardSetting,
     DelayThreshold,
     Developer,
+    DeveloperKey,
     FactoryCoordinate,
     LicenseInfo,
     MLSetting,
@@ -86,24 +87,34 @@ def init_database() -> None:
             )
             session.add(admin_user)
             logger.info("Created default administrator: admin / ChangeMeAdmin2026!")
+        else:
+            admin_user.is_active = True
+            admin_user.failed_logins = 0
+            admin_user.locked_until = None
 
         # 3. Seed Initial Company Registration IDs for registration workflow
-        reg_count = session.query(RegistrationId).count()
-        if reg_count == 0:
+        active_reg_count = session.query(RegistrationId).filter_by(status="ACTIVE").count()
+        if active_reg_count < 2:
             initial_tokens = [
-                ("REG-ADMIN-NASSAU-9901", 90),
                 ("REG-ADMIN-NASSAU-9902", 90),
                 ("REG-ADMIN-NASSAU-9903", 90),
+                ("REG-ADMIN-NASSAU-DEMO", 90),
             ]
             for token_code, days in initial_tokens:
-                reg_id = RegistrationId(
-                    token=token_code,
-                    status="ACTIVE",
-                    expiry_date=datetime.utcnow() + timedelta(days=days),
-                    created_by="System (Bootstrap)",
-                )
-                session.add(reg_id)
-            logger.info("Seeded %d initial Registration IDs.", len(initial_tokens))
+                existing_tok = session.execute(select(RegistrationId).where(RegistrationId.token == token_code)).scalar_one_or_none()
+                if not existing_tok:
+                    reg_id = RegistrationId(
+                        token=token_code,
+                        status="ACTIVE",
+                        expiry_date=datetime.utcnow() + timedelta(days=days),
+                        created_by="System (Bootstrap)",
+                        notes="Standard administrator registration authorization token",
+                    )
+                    session.add(reg_id)
+                elif existing_tok.status != "ACTIVE":
+                    existing_tok.status = "ACTIVE"
+                    existing_tok.expiry_date = datetime.utcnow() + timedelta(days=days)
+            logger.info("Seeded / refreshed active Registration IDs.")
 
         # 4. Seed Factory Coordinates
         if session.query(FactoryCoordinate).count() == 0:
@@ -179,8 +190,8 @@ def init_database() -> None:
             ))
 
         # 10. Seed Initial Root Developer Account
-        dev_count = session.query(Developer).count()
-        if dev_count == 0:
+        dev_user = session.execute(select(Developer).where(Developer.username == "developer")).scalar_one_or_none()
+        if not dev_user:
             dev_salt = bcrypt.gensalt(rounds=12)
             dev_pwd_raw = get_secret("DEV_USER_PASSWORD", "ChangeMeDev2026!")
             dev_pwd_hashed = bcrypt.hashpw(dev_pwd_raw.encode("utf-8"), dev_salt).decode("utf-8")
@@ -189,10 +200,38 @@ def init_database() -> None:
                 email="dev@nassaucandy.com",
                 full_name="Lead Infrastructure Engineer",
                 password_hash=dev_pwd_hashed,
+                role="Developer",
                 is_active=True,
+                status="ACTIVE",
             )
             session.add(dev_user)
+            session.flush()
             logger.info("Created root developer: developer / ChangeMeDev2026!")
+        else:
+            dev_user.failed_logins = 0
+            dev_user.locked_until = None
+            dev_user.is_active = True
+            dev_user.status = "ACTIVE"
+
+        # Ensure developer has an active DeveloperKey
+        dev_key = session.execute(
+            select(DeveloperKey).where(DeveloperKey.developer_id == dev_user.id, DeveloperKey.status == "ACTIVE")
+        ).scalar_one_or_none()
+        if not dev_key:
+            k_salt = bcrypt.gensalt(rounds=12)
+            k_hash = bcrypt.hashpw(b"DEV-KEY-INIT-2026-ROOT-0001", k_salt).decode("utf-8")
+            session.add(DeveloperKey(
+                developer_id=dev_user.id,
+                name="Primary Root Access Key",
+                key_prefix="DEV-KEY-INIT",
+                key_hash=k_hash,
+                status="ACTIVE",
+                key_version=1,
+                created_by="System",
+                created_at=datetime.utcnow(),
+                expires_at=datetime.utcnow() + timedelta(days=365),
+            ))
+            logger.info("Seeded primary access key for developer: DEV-KEY-INIT-2026-ROOT-0001")
 
         # 11. Seed License Info
         if session.query(LicenseInfo).count() == 0:
